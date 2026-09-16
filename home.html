@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOKIPICK — Home</title>
+  <link rel="icon" href="assets/iconA.png" type="image/png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <button class="menu-toggle" aria-label="Abrir menu" data-sidebar-toggle>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
+  </button>
+  <div class="sidebar-overlay" data-sidebar-overlay></div>
+
+  <div class="app-layout">
+    <aside class="sidebar">
+      <img src="assets/logoB.png" alt="TOKIPICK" class="logo-img" />
+      <nav>
+        <a href="home.html" class="active"><svg class="icon" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg> Home</a>
+        <a href="swipe.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6"/><path d="M11 11V4a1.5 1.5 0 0 1 3 0v7"/><path d="M14 11.5V6a1.5 1.5 0 0 1 3 0v8"/><path d="M17 13v-1a1.5 1.5 0 0 1 3 0v4a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L5.6 15a1.4 1.4 0 0 1 2-2L9 14.5"/></svg> Swipe</a>
+        <a href="closet.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M12 3a1.8 1.8 0 1 1 1.8 1.8"/><path d="M12 4.8v2"/><path d="M12 6.8 3 12.5l3.5 1.6L3 15.5 12 21l9-5.5-3.5-1.4 3.5-1.6-9-5.7Z"/></svg> Closet</a>
+        <a href="outfit.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M12 3l1.7 5 5 1.7-5 1.7L12 16l-1.7-4.6-5-1.7 5-1.7Z"/><path d="M19 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"/></svg> Outfits</a>
+        <a href="compare.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M12 20V4"/><path d="M20 20v-7"/></svg> Compare</a>
+        <a href="cart.html" ><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/><path d="M3 4h2l2.4 11.3a2 2 0 0 0 2 1.7h7.4a2 2 0 0 0 2-1.6L21 8H6"/></svg> Cart <span class="cart-count" data-cart-badge style="display:none;">0</span></a>
+      </nav>
+      <div class="user-box">
+        <a href="help.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M4 5h16v10H8l-4 4Z"/></svg> Help</a>
+        <a href="profile.html" ><span class="avatar">U</span> User</a>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">Home</div>
+
+      <div class="page-content">
+        <div class="section-head">
+          <h1>For you — Based on your style</h1>
+          <form action="search.html" method="get" style="margin:0;">
+            <input type="text" name="q" placeholder="Search" style="padding:10px 16px; border-radius:20px; border:1px solid var(--navy); width:220px;" />
+          </form>
+        </div>
+        <div class="grid" data-home-grid></div>
+      </div>
+
+      <div class="footer">
+        TOKIPICK — Smart outfit recommendations powered by AI. | Marketplace | My Wardrobe | Daily Outfits |
+        Brands | <a href="help.html">Support</a> | Privacy Policy | Terms of Service | © 2025 TOKIPICK
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

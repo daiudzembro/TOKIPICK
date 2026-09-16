@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TOKIPICK — Login</title>
+  <link rel="icon" href="assets/iconA.png" type="image/png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div class="auth-page">
+    <div class="auth-header"><img src="assets/iconA.png" alt="TOKIPICK" style="width:34px; height:34px; border-radius:50%; object-fit:cover;" /></div>
+
+    <div class="auth-card">
+      <div class="card-header">
+        <img src="assets/logoA.png" alt="TOKIPICK" style="max-width:150px; margin:0 auto; display:block;" />
+      </div>
+
+      <!-- action="home.html" simula el login por ahora, después va conectado al backend -->
+      <form action="home.html" data-login-form novalidate>
+        <div class="field">
+          <label for="user">Email or Username</label>
+          <input type="text" id="user" placeholder="Value" />
+          <div class="field-error"></div>
+        </div>
+        <div class="field">
+          <label for="pass">Password</label>
+          <input type="password" id="pass" placeholder="Value" />
+          <div class="field-error"></div>
+        </div>
+        <button type="submit" class="btn-primary">Login</button>
+      </form>
+
+      <div class="auth-links">
+        <a href="#">Forgot your Password?</a>
+      </div>
+
+      <div style="padding:0 30px;">
+        <input type="button" value="Continue with Google" class="btn-secondary" />
+      </div>
+
+      <div class="auth-links" style="padding-top:16px;">
+        Don't have an account? <a href="register.html">Register →</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
