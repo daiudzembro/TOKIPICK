@@ -1,8 +1,7 @@
 // ============================================
-// TOKIPICK — funciones compartidas
-// Todo lo que hace interactiva a la app vive acá:
-// carrito, favoritos, placard, swipe, comparación,
-// outfit generator, y validaciones de login/register.
+// TOKIPICK — funciones compartidas (TOKIPICK3)
+// Carrito, favoritos, placard, swipe con drag real,
+// mini carrito lateral, modal de compra y validaciones.
 // Usa localStorage como "base de datos" temporal
 // mientras no hay backend conectado.
 // ============================================
@@ -12,9 +11,10 @@ const STORAGE_KEYS = {
   favorites: "tokipick_favorites",
   closet: "tokipick_closet",
   purchases: "tokipick_purchases",
+  swipes: "tokipick_swipes",
 };
 
-// ---------- Storage helpers ----------
+// Storage helpers 
 
 function readStore(key, fallback) {
   try {
@@ -47,6 +47,8 @@ function addToCart(productId, size) {
     cart.push({ id: productId, size, qty: 1 });
   }
   saveCart(cart);
+  renderCartDrawer();
+  openCartDrawer();
 }
 
 function removeFromCart(productId, size) {
@@ -77,16 +79,25 @@ function isFavorite(productId) {
   return getFavorites().includes(productId);
 }
 
+// Prendas de ejemplo del closet
+const DEFAULT_CLOSET = [
+  { id: "c1", name: "Favorite top", category: "top", image: "assets/closet/favorite-top.jpg" },
+  { id: "c2", name: "Worn-in jeans", category: "bottom", image: "assets/closet/worn-in-jeans.jpg" },
+  { id: "c3", name: "Black dress", category: "dress", image: "assets/closet/black-dress.jpg" },
+  { id: "c4", name: "White sneakers", category: "footwear", image: "assets/closet/white-sneakers.jpg" },
+  { id: "c5", name: "Plaid shirt", category: "top", image: "assets/closet/plaid-shirt.jpg" },
+  { id: "c6", name: "Cargo pants", category: "bottom", image: "assets/closet/cargo-pants.jpg" },
+  { id: "c7", name: "Denim jacket", category: "outerwear", image: "assets/closet/denim-jacket.jpg" },
+];
+
 function getCloset() {
-  return readStore(STORAGE_KEYS.closet, [
-    { id: "c1", name: "Top favorito", category: "top" },
-    { id: "c2", name: "Jean gastado", category: "bottom" },
-    { id: "c3", name: "Vestido negro", category: "dress" },
-    { id: "c4", name: "Zapatillas blancas", category: "footwear" },
-    { id: "c5", name: "Camisa a cuadros", category: "top" },
-    { id: "c6", name: "Pantalón cargo", category: "bottom" },
-    { id: "c7", name: "Campera de jean", category: "outerwear" },
-  ]);
+  return readStore(STORAGE_KEYS.closet, DEFAULT_CLOSET);
+}
+
+function closetImage(item) {
+  if (item.image) return item.image;
+  const base = DEFAULT_CLOSET.find((d) => d.id === item.id);
+  return base ? base.image : null;
 }
 
 function saveCloset(items) {
@@ -100,6 +111,19 @@ function addClosetItem(name, category) {
   return items;
 }
 
+function todayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getSwipesToday() {
+  const data = readStore(STORAGE_KEYS.swipes, null);
+  return data && data.date === todayKey() ? data.count : 0;
+}
+
+function addSwipe() {
+  writeStore(STORAGE_KEYS.swipes, { date: todayKey(), count: getSwipesToday() + 1 });
+}
+
 function getPurchases() {
   return readStore(STORAGE_KEYS.purchases, []);
 }
@@ -110,7 +134,7 @@ function addPurchases(cartItems) {
   writeStore(STORAGE_KEYS.purchases, purchases);
 }
 
-// ---------- Toast ----------
+// Los Toast 
 
 function showToast(message) {
   let toast = document.querySelector(".toast");
@@ -125,17 +149,17 @@ function showToast(message) {
   toast._timer = setTimeout(() => toast.classList.remove("show"), 2200);
 }
 
-// ---------- Sidebar cart badge ----------
+//  Sidebar cart badge 
 
 function updateCartBadge() {
-  const badge = document.querySelector("[data-cart-badge]");
-  if (!badge) return;
-  const count = cartCount();
-  badge.textContent = count;
-  badge.style.display = count > 0 ? "inline-flex" : "none";
+  document.querySelectorAll("[data-cart-badge]").forEach((badge) => {
+    const count = cartCount();
+    badge.textContent = count;
+    badge.style.display = count > 0 ? "inline-flex" : "none";
+  });
 }
 
-// ---------- Pills / tabs genéricos ----------
+//  Pills genericos 
 
 function setupPillGroup(selector, onChange) {
   const pills = document.querySelectorAll(selector);
@@ -149,7 +173,7 @@ function setupPillGroup(selector, onChange) {
   });
 }
 
-// ---------- Sidebar (drawer) ----------
+//  drawer de navegacion
 
 function setupSidebar() {
   const toggle = document.querySelector("[data-sidebar-toggle]");
@@ -171,7 +195,91 @@ function setupSidebar() {
   overlay.addEventListener("click", closeSidebar);
 }
 
-// ---------- Chat con Toki ----------
+//  drawer cart izquierdo
+
+function renderCartDrawer() {
+  const itemsBox = document.querySelector("[data-cart-drawer-items]");
+  if (!itemsBox) return;
+
+  const cart = getCart();
+  if (!cart.length) {
+    itemsBox.innerHTML = `<p style="color:var(--gray-text); padding:10px 0;">You haven't added anything yet.</p>`;
+    return;
+  }
+
+  itemsBox.innerHTML = cart
+    .map((item) => {
+      const product = getProductById(item.id);
+      return `
+      <div class="cart-drawer-item">
+        ${productPhotoHtml(product)}
+        <div>
+          <strong>${product.name}</strong><br />
+          <span style="font-size:0.82rem; color:var(--gray-text);">${product.brand} · Size ${item.size} · Qty ${item.qty}</span><br />
+          <span class="rating-stars">${starsHtml(product.rating)}</span>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+function openCartDrawer() {
+  document.querySelector("[data-cart-drawer]")?.classList.add("open");
+  document.querySelector("[data-cart-drawer-overlay]")?.classList.add("open");
+}
+
+function closeCartDrawer() {
+  document.querySelector("[data-cart-drawer]")?.classList.remove("open");
+  document.querySelector("[data-cart-drawer-overlay]")?.classList.remove("open");
+}
+
+function setupCartDrawer() {
+  const drawer = document.querySelector("[data-cart-drawer]");
+  if (!drawer) return;
+  document.querySelector("[data-cart-drawer-close]")?.addEventListener("click", closeCartDrawer);
+  document.querySelector("[data-cart-drawer-overlay]")?.addEventListener("click", closeCartDrawer);
+  renderCartDrawer();
+}
+
+//  confirmacion de compra 
+
+function ensurePurchaseModal() {
+  let modal = document.querySelector("[data-purchase-modal]");
+  if (modal) return modal;
+
+  modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.setAttribute("data-purchase-modal", "");
+  modal.innerHTML = `
+    <div class="modal-box">
+      <div class="check-circle">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </div>
+      <h2>Purchase complete!</h2>
+      <p class="order-id" data-purchase-order></p>
+      <p data-purchase-summary style="color:var(--gray-text); font-size:0.9rem;"></p>
+      <div class="modal-actions">
+        <a href="home.html" class="btn-primary">Keep shopping</a>
+        <a href="profile.html" class="btn-secondary">View my purchases</a>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.classList.remove("open");
+  });
+  return modal;
+}
+
+function showPurchaseModal(cartItems) {
+  const modal = ensurePurchaseModal();
+  const orderId = Math.floor(1000 + Math.random() * 9000);
+  modal.querySelector("[data-purchase-order]").textContent = `Order #${orderId}`;
+  const itemCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
+  modal.querySelector("[data-purchase-summary]").textContent = `${itemCount} item${itemCount === 1 ? "" : "s"} on the way. You'll get an email with your shipment tracking.`;
+  modal.classList.add("open");
+}
+
+// chat con Toki (sin IA)
 
 function setupChat() {
   const form = document.querySelector("[data-chat-form]");
@@ -180,11 +288,11 @@ function setupChat() {
   if (!form || !input || !messages) return;
 
   const respuestasToki = [
-    "Dejame ver qué tenés en tu closet para armarte algo con eso.",
-    "¡Buena elección! ¿Querés que te muestre opciones para completarlo?",
-    "Puedo comparar un par de prendas si querés decidir entre varias.",
-    "Contame más sobre la ocasión y te armo un outfit acorde.",
-    "Fijate en la sección Compare si querés ver precio y calidad lado a lado.",
+    "Let me check what's in your closet and put something together.",
+    "Great choice! Want me to show you options to complete the look?",
+    "I can compare a couple of pieces if you're deciding between several.",
+    "Tell me more about the occasion and I'll build a fitting outfit.",
+    "Check the Compare section to see price and quality side by side.",
   ];
 
   function addMessage(text, from) {
@@ -210,33 +318,47 @@ function setupChat() {
   });
 }
 
-// ---------- Render de tarjeta de producto ----------
+//  Foto de producto con fallback
+
+function productPhotoInner(product) {
+  return `
+    <img class="product-photo" src="${product.image}" alt="${product.name}" loading="lazy" onerror="this.remove();" />
+    <span class="ph-text">${product.name}</span>`;
+}
+
+function productPhotoHtml(product, sizeStyle) {
+  const style = sizeStyle ? ` style="${sizeStyle}"` : "";
+  return `<div class="img-placeholder"${style}>${productPhotoInner(product)}</div>`;
+}
+
+//  Render de tarjeta de producto 
 
 function renderProductCard(product) {
   const fav = isFavorite(product.id);
-  const sizesHtml = product.sizes
-    .slice(0, 4)
-    .map((s) => `<span class="size-chip">${s}</span>`)
+  const sizeOptionsHtml = product.sizes
+    .map((s, i) => `<span class="size-option ${i === 0 ? "selected" : ""}" data-inline-size="${s}">${s}</span>`)
     .join("");
 
   return `
     <div class="item-card" data-product-card="${product.id}">
       <a class="thumb-link" href="product.html?id=${product.id}">
-        <div class="img-placeholder">${product.name}</div>
+        ${productPhotoHtml(product)}
       </a>
       <div class="top-row">
         <span class="brand">${product.brand}</span>
         <span class="price">${formatPrice(product.price)}</span>
       </div>
       <a class="name" href="product.html?id=${product.id}">${product.name}</a>
-      <div class="sizes">${sizesHtml}</div>
       <div class="match"><span>Matches ${product.matchItems} items</span><span>${product.match}%</span></div>
+
       <div class="card-actions">
-        <button type="button" class="icon-btn ${fav ? "is-active" : ""}" data-fav-btn="${product.id}" aria-label="Guardar en favoritos">
+        <button type="button" class="icon-btn ${fav ? "is-active" : ""}" data-fav-btn="${product.id}" aria-label="Save to favorites">
           <svg class="icon" viewBox="0 0 24 24"><path d="M12 21s-7.2-4.5-9.7-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.7 6c-2.5 4.5-9.7 9-9.7 9Z"/></svg>
         </button>
-        <button type="button" class="btn-add" data-quick-add="${product.id}">Add to cart</button>
+        <button type="button" class="btn-add" data-toggle-size="${product.id}">Add to cart</button>
       </div>
+
+      <div class="inline-size-row" data-size-row="${product.id}" style="display:none;">${sizeOptionsHtml}</div>
     </div>`;
 }
 
@@ -246,17 +368,38 @@ function wireProductGridEvents(container) {
       const id = Number(btn.getAttribute("data-fav-btn"));
       const active = toggleFavorite(id);
       btn.classList.toggle("is-active", active);
-      showToast(active ? "Guardado en favoritos" : "Quitado de favoritos");
+      showToast(active ? "Saved to favorites" : "Removed from favorites");
     });
   });
 
-  container.querySelectorAll("[data-quick-add]").forEach((btn) => {
+  //  size inline antes del carrito
+  container.querySelectorAll("[data-toggle-size]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const id = Number(btn.getAttribute("data-quick-add"));
-      const product = getProductById(id);
-      const size = product.sizes[0];
-      addToCart(id, size);
-      showToast(`${product.name} (talle ${size}) agregado al carrito`);
+      const id = btn.getAttribute("data-toggle-size");
+      const row = container.querySelector(`[data-size-row="${id}"]`);
+      if (!row) return;
+      const isOpen = row.style.display !== "none";
+      row.style.display = isOpen ? "none" : "flex";
+      btn.textContent = isOpen ? "Add to cart" : "Choose size ↑";
+    });
+  });
+
+  container.querySelectorAll("[data-size-row]").forEach((row) => {
+    row.querySelectorAll("[data-inline-size]").forEach((sizeBtn) => {
+      sizeBtn.addEventListener("click", () => {
+        row.querySelectorAll(".size-option").forEach((s) => s.classList.remove("selected"));
+        sizeBtn.classList.add("selected");
+
+        const id = Number(row.getAttribute("data-size-row"));
+        const size = sizeBtn.getAttribute("data-inline-size");
+        const product = getProductById(id);
+        addToCart(id, size);
+        showToast(`${product.name} (size ${size}) added to cart`);
+
+        row.style.display = "none";
+        const toggleBtn = container.querySelector(`[data-toggle-size="${id}"]`);
+        if (toggleBtn) toggleBtn.textContent = "Add to cart";
+      });
     });
   });
 }
@@ -266,7 +409,7 @@ function renderGrid(container, products) {
     container.innerHTML = `
       <div class="empty-state">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <p>No encontramos prendas para mostrar acá.</p>
+        <p>No items to show here.</p>
       </div>`;
     return;
   }
@@ -274,9 +417,7 @@ function renderGrid(container, products) {
   wireProductGridEvents(container);
 }
 
-// ============================================
-// Inicializadores por pantalla
-// ============================================
+// INIT por pantalla
 
 function initHome() {
   const grid = document.querySelector("[data-home-grid]");
@@ -293,6 +434,7 @@ function initSearch() {
   const params = new URLSearchParams(window.location.search);
   const initialQuery = params.get("q") || "";
   input.value = initialQuery;
+  input.focus();
 
   function runSearch() {
     const term = input.value.trim().toLowerCase();
@@ -308,67 +450,168 @@ function initSearch() {
   }
 
   input.addEventListener("input", runSearch);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") e.preventDefault();
+  });
   runSearch();
 }
 
+// SWIPE
+
 function initSwipe() {
-  const stack = document.querySelector("[data-swipe-stack]");
+  const stage = document.querySelector("[data-swipe-stack]");
   const favList = document.querySelector("[data-swipe-favorites]");
-  const likeBtn = document.querySelector("[data-swipe-like]");
-  const dislikeBtn = document.querySelector("[data-swipe-dislike]");
   const counter = document.querySelector("[data-swipe-counter]");
   const tabs = document.querySelectorAll("[data-swipe-tab]");
-  if (!stack) return;
+  const swipesTodayEl = document.querySelector("[data-swipes-today]");
+  const heartBadge = document.querySelector("[data-heart-badge]");
+  const heartCount = document.querySelector("[data-heart-count]");
+  if (!stage) return;
+
+  if (swipesTodayEl) swipesTodayEl.textContent = getSwipesToday();
 
   let deck = [...PRODUCTS];
   let index = 0;
+  let dragging = false;
+  let startX = 0;
+  let currentX = 0;
+  let cardEl = null;
+
+  function pulseHeart() {
+    if (!heartBadge) return;
+    if (heartCount) heartCount.textContent = getFavorites().length;
+    heartBadge.classList.add("pulse");
+    setTimeout(() => heartBadge.classList.remove("pulse"), 260);
+  }
+
+  function buildCard(product) {
+    const el = document.createElement("div");
+    el.className = "card swipe-card";
+    el.innerHTML = `
+      <span class="stamp like">LIKE</span>
+      <span class="stamp nope">DISLIKE</span>
+      ${productPhotoHtml(product, "aspect-ratio:3/4; height:auto; margin-bottom:12px;")}
+      <div class="swipe-info">
+        <h2>${product.brand}</h2>
+        <p>${product.name} — ${formatPrice(product.price)}</p>
+        <p class="swipe-hint">← Swipe to DISLIKE · Swipe to LIKE →</p>
+      </div>`;
+    return el;
+  }
 
   function renderCard() {
+    stage.innerHTML = "";
     if (index >= deck.length) {
-      stack.innerHTML = `
-        <div class="empty-state">
+      stage.innerHTML = `
+        <div class="card empty-state" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6 9 17l-5-5"/></svg>
-          <p>Ya viste todas las prendas de hoy. ¡Volvé mañana por más!</p>
+          <p>You've seen all of today's items. Come back tomorrow for more!</p>
         </div>`;
+      if (counter) counter.textContent = "";
       return;
     }
-    const product = deck[index];
-    stack.innerHTML = `
-      <div class="img-placeholder" style="height:280px;">${product.name}</div>
-      <h2 style="margin:8px 0 0;">${product.brand}</h2>
-      <p>${product.name} — ${formatPrice(product.price)}</p>
-      <p style="color:var(--gray-text); font-size:0.85rem;">← Swipe to dismiss &nbsp;·&nbsp; Swipe to save →</p>`;
+    cardEl = buildCard(deck[index]);
+    stage.appendChild(cardEl);
+    attachDrag(cardEl);
     if (counter) counter.textContent = `· ${index + 1}/${deck.length}`;
   }
 
-  function next(liked) {
+  function setCardTransform(el, dx) {
+    const rotate = dx / 18;
+    el.style.transform = `translateX(${dx}px) rotate(${rotate}deg)`;
+    const likeStamp = el.querySelector(".stamp.like");
+    const nopeStamp = el.querySelector(".stamp.nope");
+    const intensity = Math.min(Math.abs(dx) / 100, 1);
+    if (dx > 0) {
+      likeStamp.style.opacity = intensity;
+      nopeStamp.style.opacity = 0;
+    } else if (dx < 0) {
+      nopeStamp.style.opacity = intensity;
+      likeStamp.style.opacity = 0;
+    } else {
+      likeStamp.style.opacity = 0;
+      nopeStamp.style.opacity = 0;
+    }
+  }
+
+  function finishDecision(liked) {
     const product = deck[index];
+    addSwipe();
+    if (swipesTodayEl) swipesTodayEl.textContent = getSwipesToday();
     if (product && liked) {
       const favs = getFavorites();
       if (!favs.includes(product.id)) {
         favs.push(product.id);
         writeStore(STORAGE_KEYS.favorites, favs);
       }
+      pulseHeart();
     }
     index += 1;
     renderCard();
     renderFavorites();
   }
 
+  function flingCard(direction) {
+    if (!cardEl) return;
+    const liked = direction === "right";
+    cardEl.classList.add("animate");
+    const flyX = liked ? window.innerWidth : -window.innerWidth;
+    setCardTransform(cardEl, flyX);
+    const stamp = cardEl.querySelector(liked ? ".stamp.like" : ".stamp.nope");
+    if (stamp) stamp.style.opacity = 1;
+    setTimeout(() => finishDecision(liked), 320);
+  }
+
+  function resetCard() {
+    if (!cardEl) return;
+    cardEl.classList.add("animate");
+    setCardTransform(cardEl, 0);
+    setTimeout(() => cardEl && cardEl.classList.remove("animate"), 300);
+  }
+
+  function attachDrag(el) {
+    el.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      startX = e.clientX;
+      currentX = 0;
+      el.classList.remove("animate");
+      el.setPointerCapture(e.pointerId);
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      currentX = e.clientX - startX;
+      setCardTransform(el, currentX);
+    });
+
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      if (currentX > 110) {
+        flingCard("right");
+      } else if (currentX < -110) {
+        flingCard("left");
+      } else {
+        resetCard();
+      }
+    }
+
+    el.addEventListener("pointerup", endDrag);
+    el.addEventListener("pointercancel", endDrag);
+  }
+
   function renderFavorites() {
     if (!favList) return;
     const favs = getFavorites();
     const items = PRODUCTS.filter((p) => favs.includes(p.id));
+    if (heartCount) heartCount.textContent = favs.length;
     if (!items.length) {
-      favList.innerHTML = `<p style="color:var(--gray-text);">Todavía no guardaste nada. Hacé swipe a la derecha en lo que te guste.</p>`;
+      favList.innerHTML = `<p style="color:var(--gray-text);">You haven't saved anything yet. Swipe right on what you like.</p>`;
       return;
     }
     favList.innerHTML = `<div class="grid">${items.map(renderProductCard).join("")}</div>`;
     wireProductGridEvents(favList);
   }
-
-  likeBtn?.addEventListener("click", () => next(true));
-  dislikeBtn?.addEventListener("click", () => next(false));
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", (e) => {
@@ -388,7 +631,6 @@ function initSwipe() {
 
 function initCloset() {
   const grid = document.querySelector("[data-closet-grid]");
-  const addBtn = document.querySelector("[data-closet-add]");
   const statItems = document.querySelector("[data-closet-count]");
   if (!grid) return;
 
@@ -402,7 +644,10 @@ function initCloset() {
       .map(
         (item) => `
       <div class="item-card">
-        <div class="img-placeholder">${item.name}</div>
+        <div class="img-placeholder">
+          ${closetImage(item) ? `<img class="product-photo" src="${closetImage(item)}" alt="${item.name}" loading="lazy" onerror="this.remove();" />` : ""}
+          <span class="ph-text">${item.name}</span>
+        </div>
         <div class="name">${item.name}</div>
         <div style="color:var(--gray-text); font-size:0.8rem;">${CATEGORY_LABELS[item.category] || item.category}</div>
       </div>`
@@ -411,21 +656,20 @@ function initCloset() {
 
     grid.innerHTML =
       cards +
-      `<button type="button" class="item-card" data-closet-add-inline style="align-items:center; justify-content:center; cursor:pointer; border:1px dashed var(--navy); background:transparent; min-height:140px;">
-        <span style="font-size:1.8rem; color:var(--navy);">+</span>
+      `<button type="button" class="closet-add-tile" data-closet-add-inline aria-label="Add item to closet">
+        <span class="plus">+</span>
+        <span>Add item</span>
       </button>`;
 
     grid.querySelector("[data-closet-add-inline]")?.addEventListener("click", openAddForm);
   }
 
   function openAddForm() {
-    const name = prompt("¿Qué prenda querés subir a tu placard? (ej: Campera negra)");
-    if (!name) return;
-    const category = prompt("Categoría: top, bottom, footwear, accessory, outerwear o dress", "top");
-    const valid = ["top", "bottom", "footwear", "accessory", "outerwear", "dress"];
-    addClosetItem(name.trim(), valid.includes((category || "").trim()) ? category.trim() : "top");
-    render();
-    showToast("Prenda agregada a tu placard");
+    openClosetModal((name, category) => {
+      addClosetItem(name, category);
+      render();
+      showToast("Item added to your closet");
+    });
   }
 
   setupPillGroup("[data-closet-filter]", (pill) => {
@@ -433,7 +677,7 @@ function initCloset() {
     render();
   });
 
-  addBtn?.addEventListener("click", openAddForm);
+  document.querySelector("[data-closet-add]")?.addEventListener("click", openAddForm);
 
   render();
 }
@@ -474,10 +718,10 @@ function initOutfit() {
         return `
         <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
           <div style="display:flex; align-items:center; gap:12px;">
-            <div class="img-placeholder" style="width:50px; height:50px; margin:0;">${item.name}</div>
+            ${productPhotoHtml(item, "width:50px; height:50px; margin:0;")}
             <div><strong>${CATEGORY_LABELS[cat]}</strong><br /><span style="font-size:0.85rem; color:var(--gray-text);">${item.brand} · ${item.name}</span></div>
           </div>
-          <a href="product.html?id=${item.id}" class="pill">Ver</a>
+          <a href="product.html?id=${item.id}" class="pill">View</a>
         </div>`;
       })
       .join("");
@@ -514,17 +758,8 @@ function initCompare() {
 
   function renderSide(container, productId) {
     const product = getProductById(productId);
-    const best = product.match >= 80;
     container.innerHTML = `
-      ${
-        best
-          ? `<span style="position:absolute; top:16px; right:16px; background:var(--navy); color:var(--pink); padding:6px 12px; border-radius:16px; font-size:0.75rem; display:flex; align-items:center; gap:4px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.7 5 5 1.7-5 1.7L12 16l-1.7-4.6-5-1.7 5-1.7Z"/></svg>
-              Best option
-            </span>`
-          : ""
-      }
-      <div class="img-placeholder" style="height:220px;">${product.name}</div>
+      ${productPhotoHtml(product, "width:100%; max-width:320px; aspect-ratio:3/4; height:auto; margin:0 auto 12px;")}
       <div style="display:flex; justify-content:space-between; margin-top:10px;">
         <strong>${product.name}<br /><span style="font-weight:400;">${formatPrice(product.price)}</span></strong>
         <span>${product.brand}</span>
@@ -563,11 +798,10 @@ function initCart() {
       list.innerHTML = `
         <div class="empty-state">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/><path d="M3 4h2l2.4 11.3a2 2 0 0 0 2 1.7h7.4a2 2 0 0 0 2-1.6L21 8H6"/></svg>
-          <p>Tu carrito está vacío. Explorá Home o Swipe para encontrar algo.</p>
+          <p>Your cart is empty. Explore Home or Swipe to find something.</p>
         </div>`;
       if (summary) summary.innerHTML = "";
       if (sizeCount) sizeCount.textContent = "0";
-      if (completeBtn) completeBtn.setAttribute("aria-disabled", "true");
       return;
     }
 
@@ -580,10 +814,10 @@ function initCart() {
         return `
         <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
           <div style="display:flex; align-items:center; gap:12px;">
-            <div class="img-placeholder" style="width:60px; height:60px; margin:0; font-size:0.65rem;">${product.name}</div>
+            ${productPhotoHtml(product, "width:60px; height:60px; margin:0; font-size:0.65rem;")}
             <div>
               <strong>${product.name}</strong><br />
-              <span style="font-size:0.85rem; color:var(--gray-text);">${product.brand} · Talle ${item.size} · Cant. ${item.qty}</span><br />
+              <span style="font-size:0.85rem; color:var(--gray-text);">${product.brand} · Size ${item.size} · Qty ${item.qty}</span><br />
               <span style="font-size:0.8rem; color:var(--pink-dark);">✓ Matches with ${product.matchItems} items in your closet</span>
             </div>
           </div>
@@ -625,9 +859,9 @@ function initCart() {
     const cart = getCart();
     if (!cart.length) return;
     addPurchases(cart);
+    showPurchaseModal(cart);
     saveCart([]);
     render();
-    showToast("¡Compra realizada con éxito!");
   });
 
   render();
@@ -640,12 +874,14 @@ function initProduct() {
   const params = new URLSearchParams(window.location.search);
   const product = getProductById(params.get("id")) || PRODUCTS[0];
 
-  wrap.querySelector("[data-product-image]").textContent = product.name;
+  wrap.querySelector("[data-product-image]").innerHTML = productPhotoInner(product);
   wrap.querySelector("[data-product-brand]").textContent = product.brand;
   wrap.querySelector("[data-product-name]").textContent = product.name;
   wrap.querySelector("[data-product-price]").textContent = formatPrice(product.price);
   wrap.querySelector("[data-product-desc]").textContent = product.desc;
   wrap.querySelector("[data-product-match]").textContent = `Matches with ${product.matchItems} items from your closet — ${product.match}%`;
+  const ratingEl = wrap.querySelector("[data-product-rating]");
+  if (ratingEl) ratingEl.textContent = starsHtml(product.rating);
 
   const sizeSelector = wrap.querySelector("[data-product-sizes]");
   let selectedSize = product.sizes[0];
@@ -667,14 +903,14 @@ function initProduct() {
     favBtn.addEventListener("click", () => {
       const active = toggleFavorite(product.id);
       favBtn.classList.toggle("is-active", active);
-      showToast(active ? "Guardado en favoritos" : "Quitado de favoritos");
+      showToast(active ? "Saved to favorites" : "Removed from favorites");
     });
   }
 
   const addBtn = wrap.querySelector("[data-product-add]");
   addBtn?.addEventListener("click", () => {
     addToCart(product.id, selectedSize);
-    showToast(`${product.name} (talle ${selectedSize}) agregado al carrito`);
+    showToast(`${product.name} (size ${selectedSize}) added to cart`);
   });
 
   const others = document.querySelector("[data-product-others]");
@@ -684,7 +920,7 @@ function initProduct() {
       .map(
         (p) => `
       <div class="item-card">
-        <a class="thumb-link" href="product.html?id=${p.id}"><div class="img-placeholder">${p.name}</div></a>
+        <a class="thumb-link" href="product.html?id=${p.id}">${productPhotoHtml(p)}</a>
         <a class="name" href="product.html?id=${p.id}">${p.name}</a>
         <div class="brand">${p.brand}</div>
       </div>`
@@ -697,27 +933,163 @@ function initProfile() {
   const purchaseGrid = document.querySelector("[data-profile-purchases]");
   const statsPurchases = document.querySelector("[data-profile-stat-purchases]");
   const statsItems = document.querySelector("[data-profile-stat-items]");
+  const statsSwipes = document.querySelector("[data-profile-stat-swipes]");
   if (!purchaseGrid && !statsPurchases) return;
 
   const purchases = getPurchases();
-  if (statsPurchases) statsPurchases.textContent = purchases.length;
+  const totalBought = purchases.reduce((sum, p) => sum + p.qty, 0);
+  if (statsPurchases) statsPurchases.textContent = totalBought;
   if (statsItems) statsItems.textContent = getCloset().length;
+  if (statsSwipes) statsSwipes.textContent = getSwipesToday();
 
-  if (purchaseGrid) {
-    if (!purchases.length) {
-      purchaseGrid.innerHTML = `<p style="color:var(--gray-text);">Todavía no completaste ninguna compra.</p>`;
-      return;
-    }
-    purchaseGrid.innerHTML = purchases
-      .map((item) => {
-        const product = getProductById(item.id);
-        return `<div class="img-placeholder">${product.name}</div>`;
-      })
-      .join("");
+  if (!purchaseGrid) return;
+
+  if (!purchases.length) {
+    purchaseGrid.innerHTML = `<p style="color:var(--gray-text);">You haven't completed any purchases yet.</p>`;
+    return;
   }
+
+  purchaseGrid.innerHTML = purchases
+    .map((item) => {
+      const product = getProductById(item.id);
+      return `
+      <div class="item-card">
+        <a class="thumb-link" href="product.html?id=${product.id}">${productPhotoHtml(product)}</a>
+        <a class="name" href="product.html?id=${product.id}">${product.name}</a>
+        <div style="color:var(--gray-text); font-size:0.8rem;">${product.brand} · Size ${item.size} · Qty ${item.qty}</div>
+      </div>`;
+    })
+    .join("");
 }
 
-// ---------- Login / Register ----------
+
+// Agregar al carrito
+
+function openClosetModal(onAdd) {
+  let modal = document.querySelector("[data-closet-modal]");
+
+  if (!modal) {
+    const options = Object.keys(CATEGORY_LABELS)
+      .map((key) => `<option value="${key}">${CATEGORY_LABELS[key]}</option>`)
+      .join("");
+
+    modal = document.createElement("div");
+    modal.className = "modal-overlay";
+    modal.setAttribute("data-closet-modal", "");
+    modal.innerHTML = `
+      <div class="modal-box modal-form">
+        <button type="button" class="modal-close" data-modal-close aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <h2>Add to your closet</h2>
+        <p class="modal-sub">Upload a piece you already own.</p>
+        <form data-closet-form novalidate>
+          <div class="field">
+            <label for="closet-name">Item name</label>
+            <input type="text" id="closet-name" placeholder="e.g. Black jacket" autocomplete="off" />
+            <div class="field-error"></div>
+          </div>
+          <div class="field">
+            <label for="closet-category">Category</label>
+            <select id="closet-category" class="select-styled">${options}</select>
+          </div>
+          <div class="modal-actions modal-actions-row">
+            <button type="button" class="btn-secondary" data-modal-close>Cancel</button>
+            <button type="submit" class="btn-primary">Add item</button>
+          </div>
+        </form>
+      </div>`;
+    document.body.appendChild(modal);
+
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal || e.target.closest("[data-modal-close]")) modal.classList.remove("open");
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") modal.classList.remove("open");
+    });
+  }
+
+  // se re-enlaza el submit cada vez para usar el callback actual
+  const form = modal.querySelector("[data-closet-form]");
+  const nameInput = modal.querySelector("#closet-name");
+  const categorySelect = modal.querySelector("#closet-category");
+  const errorEl = modal.querySelector(".field-error");
+
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameInput.classList.add("invalid");
+      errorEl.textContent = "Enter a name for the item";
+      return;
+    }
+    onAdd(name, categorySelect.value);
+    modal.classList.remove("open");
+  };
+
+  nameInput.value = "";
+  nameInput.classList.remove("invalid");
+  errorEl.textContent = "";
+  categorySelect.value = "top";
+  modal.classList.add("open");
+  setTimeout(() => nameInput.focus(), 60);
+}
+
+// SETTING del perfil
+
+function initSettings() {
+  const openers = document.querySelectorAll("[data-settings-open]");
+  if (!openers.length) return;
+
+  const items = [
+    { label: "Privacy", icon: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>' },
+    { label: "Passwords", icon: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9"/><path d="M16 7l3 3"/>' },
+    { label: "Payment methods", icon: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>' },
+    { label: "Returns", icon: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>' },
+    { label: "Language", icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18"/>' },
+  ];
+
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.setAttribute("data-settings-modal", "");
+  modal.innerHTML = `
+    <div class="modal-box modal-form">
+      <button type="button" class="modal-close" data-modal-close aria-label="Close settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+      <h2>Settings</h2>
+      <p class="modal-sub">Manage your account preferences.</p>
+      <div class="settings-list">
+        ${items
+          .map(
+            (it) => `
+          <button type="button" class="settings-item">
+            <svg class="icon" viewBox="0 0 24 24">${it.icon}</svg>
+            <span>${it.label}</span>
+            <svg class="icon chev" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>`
+          )
+          .join("")}
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  openers.forEach((btn) =>
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      modal.classList.add("open");
+    })
+  );
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal || e.target.closest("[data-modal-close]")) modal.classList.remove("open");
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") modal.classList.remove("open");
+  });
+}
+
+// LOGIN / REGISTER
 
 function initAuth() {
   const loginForm = document.querySelector("[data-login-form]");
@@ -737,14 +1109,14 @@ function initAuth() {
       let valid = true;
 
       if (!user.value.trim()) {
-        setError(user, "Ingresá tu email o usuario");
+        setError(user, "Enter your email or username");
         valid = false;
       } else {
         setError(user, "");
       }
 
       if (!pass.value) {
-        setError(pass, "Ingresá tu contraseña");
+        setError(pass, "Enter your password");
         valid = false;
       } else {
         setError(pass, "");
@@ -763,7 +1135,7 @@ function initAuth() {
       let valid = true;
 
       if (!name.value.trim()) {
-        setError(name, "Ingresá tu nombre");
+        setError(name, "Enter your name");
         valid = false;
       } else {
         setError(name, "");
@@ -771,21 +1143,21 @@ function initAuth() {
 
       const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailPattern.test(email.value.trim())) {
-        setError(email, "Ingresá un email válido");
+        setError(email, "Enter a valid email");
         valid = false;
       } else {
         setError(email, "");
       }
 
       if (pass.value.length < 6) {
-        setError(pass, "Mínimo 6 caracteres");
+        setError(pass, "At least 6 characters");
         valid = false;
       } else {
         setError(pass, "");
       }
 
       if (pass2.value !== pass.value || !pass2.value) {
-        setError(pass2, "Las contraseñas no coinciden");
+        setError(pass2, "Passwords don't match");
         valid = false;
       } else {
         setError(pass2, "");
@@ -796,12 +1168,11 @@ function initAuth() {
   }
 }
 
-// ============================================
 // Arranque
-// ============================================
 
 document.addEventListener("DOMContentLoaded", () => {
   setupSidebar();
+  setupCartDrawer();
   setupChat();
   updateCartBadge();
   initAuth();
@@ -815,4 +1186,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initCart();
   initProduct();
   initProfile();
+  initSettings();
 });
