@@ -81,13 +81,13 @@ function isFavorite(productId) {
 
 // Prendas de ejemplo del closet
 const DEFAULT_CLOSET = [
-  { id: "c1", name: "Favorite top", category: "top", image: "assets/closet/favorite-top.jpg" },
-  { id: "c2", name: "Worn-in jeans", category: "bottom", image: "assets/closet/worn-in-jeans.jpg" },
-  { id: "c3", name: "Black dress", category: "dress", image: "assets/closet/black-dress.jpg" },
-  { id: "c4", name: "White sneakers", category: "footwear", image: "assets/closet/white-sneakers.jpg" },
-  { id: "c5", name: "Plaid shirt", category: "top", image: "assets/closet/plaid-shirt.jpg" },
-  { id: "c6", name: "Cargo pants", category: "bottom", image: "assets/closet/cargo-pants.jpg" },
-  { id: "c7", name: "Denim jacket", category: "outerwear", image: "assets/closet/denim-jacket.jpg" },
+  { id: "c1", name: "Favorite top", category: "top", image: "../assets/closet/favorite-top.jpg" },
+  { id: "c2", name: "Worn-in jeans", category: "bottom", image: "../assets/closet/worn-in-jeans.jpg" },
+  { id: "c3", name: "Black dress", category: "dress", image: "../assets/closet/black-dress.jpg" },
+  { id: "c4", name: "White sneakers", category: "footwear", image: "../assets/closet/white-sneakers.jpg" },
+  { id: "c5", name: "Plaid shirt", category: "top", image: "../assets/closet/plaid-shirt.jpg" },
+  { id: "c6", name: "Cargo pants", category: "bottom", image: "../assets/closet/cargo-pants.jpg" },
+  { id: "c7", name: "Denim jacket", category: "outerwear", image: "../assets/closet/denim-jacket.jpg" },
 ];
 
 function getCloset() {
@@ -102,6 +102,17 @@ function closetImage(item) {
 
 function saveCloset(items) {
   writeStore(STORAGE_KEYS.closet, items);
+}
+
+// Solo se pueden eliminar las prendas que agrego el usuario (no las de ejemplo)
+function isCustomClosetItem(item) {
+  return !DEFAULT_CLOSET.some((d) => d.id === item.id);
+}
+
+function removeClosetItem(id) {
+  const items = getCloset().filter((i) => i.id !== id);
+  saveCloset(items);
+  return items;
 }
 
 function addClosetItem(name, category) {
@@ -647,6 +658,7 @@ function initCloset() {
         <div class="img-placeholder">
           ${closetImage(item) ? `<img class="product-photo" src="${closetImage(item)}" alt="${item.name}" loading="lazy" onerror="this.remove();" />` : ""}
           <span class="ph-text">${item.name}</span>
+          ${isCustomClosetItem(item) ? `<button type="button" class="item-delete" data-closet-delete="${item.id}" aria-label="Delete ${item.name}" title="Delete item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>` : ""}
         </div>
         <div class="name">${item.name}</div>
         <div style="color:var(--gray-text); font-size:0.8rem;">${CATEGORY_LABELS[item.category] || item.category}</div>
@@ -662,6 +674,18 @@ function initCloset() {
       </button>`;
 
     grid.querySelector("[data-closet-add-inline]")?.addEventListener("click", openAddForm);
+
+    grid.querySelectorAll("[data-closet-delete]").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-closet-delete");
+        const item = getCloset().find((i) => i.id === id);
+        if (!item) return;
+        if (!confirm(`Delete "${item.name}" from your closet?`)) return;
+        removeClosetItem(id);
+        render();
+        showToast("Item removed from your closet");
+      })
+    );
   }
 
   function openAddForm() {

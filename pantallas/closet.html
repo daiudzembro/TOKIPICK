@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TOKIPICK — Swipe</title>
-  <link rel="icon" href="assets/iconA.png" type="image/png" />
-  <link rel="stylesheet" href="css/style.css" />
+  <title>TOKIPICK — Closet</title>
+  <link rel="icon" href="../assets/iconA.png" type="image/png" />
+  <link rel="stylesheet" href="../css/style.css" />
 </head>
 <body>
 
@@ -16,11 +16,11 @@
 
   <div class="app-layout">
     <aside class="sidebar">
-      <img src="assets/logoB.png" alt="TOKIPICK" class="logo-img" />
+      <img src="../assets/logoB.png" alt="TOKIPICK" class="logo-img" />
       <nav>
         <a href="home.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg> Home</a>
-        <a href="swipe.html" class="active"><svg class="icon" viewBox="0 0 24 24"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6"/><path d="M11 11V4a1.5 1.5 0 0 1 3 0v7"/><path d="M14 11.5V6a1.5 1.5 0 0 1 3 0v8"/><path d="M17 13v-1a1.5 1.5 0 0 1 3 0v4a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L5.6 15a1.4 1.4 0 0 1 2-2L9 14.5"/></svg> Swipe</a>
-        <a href="closet.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M12 3a1.8 1.8 0 1 1 1.8 1.8"/><path d="M12 4.8v2"/><path d="M12 6.8 3 12.5l3.5 1.6L3 15.5 12 21l9-5.5-3.5-1.4 3.5-1.6-9-5.7Z"/></svg> Closet</a>
+        <a href="swipe.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6"/><path d="M11 11V4a1.5 1.5 0 0 1 3 0v7"/><path d="M14 11.5V6a1.5 1.5 0 0 1 3 0v8"/><path d="M17 13v-1a1.5 1.5 0 0 1 3 0v4a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L5.6 15a1.4 1.4 0 0 1 2-2L9 14.5"/></svg> Swipe</a>
+        <a href="closet.html" class="active"><svg class="icon" viewBox="0 0 24 24"><path d="M12 3a1.8 1.8 0 1 1 1.8 1.8"/><path d="M12 4.8v2"/><path d="M12 6.8 3 12.5l3.5 1.6L3 15.5 12 21l9-5.5-3.5-1.4 3.5-1.6-9-5.7Z"/></svg> Closet</a>
         <a href="outfit.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M12 3l1.7 5 5 1.7-5 1.7L12 16l-1.7-4.6-5-1.7 5-1.7Z"/><path d="M19 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"/></svg> Outfits</a>
         <a href="compare.html" ><svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M12 20V4"/><path d="M20 20v-7"/></svg> Compare</a>
         <a href="cart.html" ><svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/><path d="M3 4h2l2.4 11.3a2 2 0 0 0 2 1.7h7.4a2 2 0 0 0 2-1.6L21 8H6"/></svg> Cart <span class="cart-count" data-cart-badge style="display:none;">0</span></a>
@@ -32,49 +32,37 @@
     </aside>
 
     <div class="main">
-      <header class="topbar">Swipe</header>
+      <header class="topbar">Closet</header>
 
       <main class="page-content">
-        <div class="section-head">
-          <div class="tabs">
-            <a href="#" class="active" data-swipe-tab="explore">Explore</a>
-            <a href="#" data-swipe-tab="favorites">Favorites</a>
-          </div>
-          <span class="heart-badge" data-heart-badge>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.2-4.5-9.7-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.7 6c-2.5 4.5-9.7 9-9.7 9Z"/></svg>
-            <span data-heart-count>0</span>
-          </span>
-        </div>
+        <h1>Closet</h1>
 
-        <h1>Swipe for STYLE</h1>
-
-        <div data-swipe-explore>
-          <div style="display:flex; gap:24px; flex-wrap:wrap;">
-            <div class="card" style="flex:1; min-width:260px;">
-              <h3>Personal trends</h3>
-              <p style="color:var(--gray-text);"><span data-swipes-today>0</span> items valued today <span data-swipe-counter style="font-weight:600;"></span></p>
-              <div class="trend-tags">
-                <span class="trend-tag">Neutral colors</span>
-                <span class="trend-tag">Oversize</span>
-                <span class="trend-tag">Casual</span>
-                <span class="trend-tag">Low cost</span>
-              </div>
-              <div class="card" style="background:var(--navy); color:var(--pink); margin:0; display:flex; align-items:flex-start; gap:8px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0; margin-top:3px;"><path d="M12 3l1.7 5 5 1.7-5 1.7L12 16l-1.7-4.6-5-1.7 5-1.7Z"/></svg>
-                <span>You've already learned your style: <strong>casual</strong>. Recommendations improve with every swipe!</span>
-              </div>
+        <div class="two-col">
+          <div class="col-main">
+            <div class="pills">
+              <span class="pill active" data-closet-filter="all">All</span>
+              <span class="pill" data-closet-filter="top">Top</span>
+              <span class="pill" data-closet-filter="bottom">Bottom</span>
+              <span class="pill" data-closet-filter="footwear">Foot wear</span>
+              <span class="pill" data-closet-filter="outerwear">Outerwear</span>
+              <span class="pill" data-closet-filter="accessory">Accessories</span>
             </div>
 
-            <div style="flex:1; min-width:260px;">
-              <div class="swipe-stage" data-swipe-stack></div>
+            <div class="card" style="background:var(--navy);">
+              <div class="grid" data-closet-grid></div>
             </div>
           </div>
 
-        </div>
-
-        <div data-swipe-favlist style="display:none;">
-          <h3 style="margin-top:0;">Saved items</h3>
-          <div data-swipe-favorites></div>
+          <div class="col-side">
+            <div class="card">
+              <h3 style="margin-top:0;">Stats</h3>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <div class="stat-pill"><span class="num" data-closet-count>0</span>Items</div>
+                <div class="stat-pill"><span class="num">8</span>Outfits</div>
+                <div class="stat-pill"><span class="num">14</span>Brands</div>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -103,7 +91,7 @@
     </div>
   </aside>
 
-  <script src="js/data.js"></script>
-  <script src="js/main.js"></script>
+  <script src="../js/data.js"></script>
+  <script src="../js/main.js"></script>
 </body>
 </html>

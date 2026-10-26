@@ -1429,3 +1429,29 @@ button {
   margin-left: auto;
   color: var(--gray-text);
 }
+
+
+/*  Boton para eliminar prendas agregadas al closet  */
+.item-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  z-index: 2;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.item-delete:hover {
+  background: var(--danger);
+  color: var(--white);
+}
